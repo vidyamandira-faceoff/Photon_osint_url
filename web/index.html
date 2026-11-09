@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photon - OSINT & Web Recon Dashboard</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-group">
+        <div class="logo-icon">P</div>
+        <div>
+          <div class="logo-title">
+            <span>PHOTON</span> <span class="badge badge-primary">v1.3.2</span>
+          </div>
+          <div class="logo-subtitle">Fast OSINT & Web Crawler</div>
+        </div>
+      </div>
+
+      <div class="header-status">
+        <button type="button" id="themeToggleBtn" class="theme-toggle-btn" title="Switch color theme">
+          <span class="theme-dot"></span>
+          <span id="themeToggleText">Theme: Light</span>
+        </button>
+        <div id="statusIndicator" class="status-indicator status-idle">
+          <span class="status-dot"></span>
+          <span id="statusText">IDLE</span>
+        </div>
+        <div class="header-timer" id="scanTimer">00:00</div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-grid">
+      <!-- Left Column: Controls & Presets -->
+      <section class="card config-panel">
+        <div class="card-header">
+          <h2>Target & Crawl Configuration</h2>
+          <div class="preset-pills">
+            <button type="button" class="preset-btn active" data-preset="quick">Quick Recon</button>
+            <button type="button" class="preset-btn" data-preset="deep">Deep Scan</button>
+            <button type="button" class="preset-btn" data-preset="keys">Secrets & Keys</button>
+            <button type="button" class="preset-btn" data-preset="stealth">Stealth</button>
+          </div>
+        </div>
+
+        <form id="crawlForm" class="config-form">
+          <!-- Target URL -->
+          <div class="form-group">
+            <label for="targetUrl">Target URL <span class="required">*</span></label>
+            <div class="url-input-wrapper">
+              <input type="url" id="targetUrl" name="url" placeholder="https://example.com" required autocomplete="off" spellcheck="false">
+              <button type="button" id="clearUrlBtn" class="clear-input-btn" title="Clear">x</button>
+            </div>
+          </div>
+
+          <!-- Sliders: Depth & Threads -->
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <div class="label-with-value">
+                <label for="levelInput">Crawl Depth (-l)</label>
+                <span class="val-badge" id="levelVal">2</span>
+              </div>
+              <input type="range" id="levelInput" name="level" min="1" max="5" value="2" class="range-slider">
+              <span class="helper-text">Levels of internal links to follow</span>
+            </div>
+
+            <div class="form-group flex-1">
+              <div class="label-with-value">
+                <label for="threadsInput">Threads (-t)</label>
+                <span class="val-badge" id="threadsVal">10</span>
+              </div>
+              <input type="range" id="threadsInput" name="threads" min="1" max="50" value="10" class="range-slider">
+              <span class="helper-text">Concurrent worker threads</span>
+            </div>
+          </div>
+
+          <!-- Feature Toggles -->
+          <div class="feature-toggles">
+            <label class="toggle-card">
+              <input type="checkbox" id="toggleKeys" name="keys" checked>
+              <div class="toggle-content">
+                <span class="toggle-title">Find Secret Keys</span>
+                <span class="toggle-desc">Extract API keys and high entropy tokens</span>
+              </div>
+            </label>
+
+            <label class="toggle-card">
+              <input type="checkbox" id="toggleWayback" name="wayback" checked>
+              <div class="toggle-content">
+                <span class="toggle-title">Wayback Machine</span>
+                <span class="toggle-desc">Seed with archive.org URLs</span>
+              </div>
+            </label>
+
+            <label class="toggle-card">
+              <input type="checkbox" id="toggleDns" name="dns">
+              <div class="toggle-content">
+                <span class="toggle-title">Subdomains & DNS</span>
+                <span class="toggle-desc">Find subdomains and map DNS</span>
+              </div>
+            </label>
+
+            <label class="toggle-card">
+              <input type="checkbox" id="toggleClone" name="clone">
+              <div class="toggle-content">
+                <span class="toggle-title">Clone Website</span>
+                <span class="toggle-desc">Download HTML pages locally</span>
+              </div>
+            </label>
+
+            <label class="toggle-card">
+              <input type="checkbox" id="toggleOnlyUrls" name="only_urls">
+              <div class="toggle-content">
+                <span class="toggle-title">Only Extract URLs</span>
+                <span class="toggle-desc">Skip files, emails, and intel</span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Advanced Collapsible Accordion -->
+          <details class="advanced-settings">
+            <summary class="advanced-summary">
+              <span>Advanced Crawl Options (Proxy, Cookies, Exclusions)</span>
+              <span class="chevron"></span>
+            </summary>
+            <div class="advanced-body">
+              <div class="form-row">
+                <div class="form-group flex-1">
+                  <label for="delayInput">Delay in seconds (-d)</label>
+                  <input type="number" id="delayInput" name="delay" min="0" max="30" step="0.1" value="0" placeholder="0">
+                </div>
+                <div class="form-group flex-1">
+                  <label for="timeoutInput">Timeout in sec (--timeout)</label>
+                  <input type="number" id="timeoutInput" name="timeout" min="1" max="120" value="10" placeholder="10">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="cookieInput">Cookie (-c)</label>
+                <input type="text" id="cookieInput" name="cookie" placeholder="sessionid=xyz; token=abc">
+              </div>
+
+              <div class="form-group">
+                <label for="regexInput">Custom Regex Pattern (-r)</label>
+                <input type="text" id="regexInput" name="regex" placeholder="e.g. \d{3}-\d{2}-\d{4}">
+              </div>
+
+              <div class="form-group">
+                <label for="excludeInput">Exclude URLs Matching Regex (--exclude)</label>
+                <input type="text" id="excludeInput" name="exclude" placeholder="e.g. (logout|signout|delete)">
+              </div>
+
+              <div class="form-group">
+                <label for="proxyInput">Proxy Server (-p)</label>
+                <input type="text" id="proxyInput" name="proxy" placeholder="127.0.0.1:8080 or socks5://127.0.0.1:9050">
+              </div>
+
+              <div class="form-group">
+                <label for="seedsInput">Custom Seed URLs (-s)</label>
+                <input type="text" id="seedsInput" name="seeds" placeholder="Space-separated URLs">
+              </div>
+
+              <div class="form-group">
+                <label for="userAgentInput">Custom User-Agent</label>
+                <input type="text" id="userAgentInput" name="user_agent" placeholder="Leave blank for random user-agent">
+              </div>
+            </div>
+          </details>
+
+          <!-- Action Buttons -->
+          <div class="action-bar">
+            <button type="submit" id="startBtn" class="btn btn-primary">
+              <span>Launch Crawl</span>
+            </button>
+            <button type="button" id="stopBtn" class="btn btn-danger" disabled>
+              <span>Stop Crawl</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Right Column: Live Terminal & Metrics -->
+      <section class="card terminal-panel">
+        <div class="card-header">
+          <h2>Live Execution Output</h2>
+          <div class="terminal-actions">
+            <label class="autoscroll-toggle">
+              <input type="checkbox" id="autoScrollToggle" checked>
+              <span>Auto-scroll</span>
+            </label>
+            <button type="button" id="clearTerminalBtn" class="btn-sm" title="Clear console">Clear</button>
+          </div>
+        </div>
+
+        <!-- Terminal Output Window -->
+        <div class="terminal-wrapper" id="terminalWrapper">
+          <pre id="terminalLogs" class="terminal-logs"><code><span class="log-dim">[*] Photon CLI & Web Engine Ready.</span>
+<span class="log-dim">[*] Enter a target URL and hit "Launch Crawl" to start.</span></code></pre>
+        </div>
+
+        <!-- Quick Metrics Bar -->
+        <div class="metrics-bar">
+          <div class="metric-item">
+            <span class="metric-label">Internal URLs</span>
+            <span class="metric-val" id="metricInternal">0</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Fuzzable</span>
+            <span class="metric-val" id="metricFuzzable">0</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Endpoints</span>
+            <span class="metric-val" id="metricEndpoints">0</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Keys</span>
+            <span class="metric-val" id="metricKeys">0</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Intel</span>
+            <span class="metric-val" id="metricIntel">0</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom Section: Loot Explorer -->
+    <section class="card results-panel" id="resultsSection">
+      <div class="card-header results-header">
+        <div class="results-title-group">
+          <h2>Harvested Intelligence & Results</h2>
+          <div class="target-selector-wrapper">
+            <label for="scanSelect">Target:</label>
+            <select id="scanSelect" class="scan-select">
+              <option value="">No scans available</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="results-actions">
+          <div class="search-box">
+            <input type="text" id="resultFilterInput" placeholder="Filter in current tab...">
+          </div>
+          <button type="button" id="copyTabBtn" class="btn-sm" title="Copy active tab items">Copy Tab</button>
+          <button type="button" id="downloadTabBtn" class="btn-sm" title="Download active tab as .txt">Download TXT</button>
+          <button type="button" id="exportJsonBtn" class="btn-sm btn-export" title="Export full report as JSON">Export JSON</button>
+        </div>
+      </div>
+
+      <!-- Dataset Tabs -->
+      <nav class="dataset-tabs" id="datasetTabs">
+        <button type="button" class="tab-btn active" data-tab="internal">
+          Internal <span class="tab-count" id="countInternal">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="fuzzable">
+          Fuzzable <span class="tab-count" id="countFuzzable">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="endpoints">
+          Endpoints <span class="tab-count" id="countEndpoints">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="keys">
+          Keys & Secrets <span class="tab-count" id="countKeys">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="intel">
+          Intel <span class="tab-count" id="countIntel">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="scripts">
+          Scripts <span class="tab-count" id="countScripts">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="files">
+          Files <span class="tab-count" id="countFiles">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="subdomains">
+          Subdomains <span class="tab-count" id="countSubdomains">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="robots">
+          Robots.txt <span class="tab-count" id="countRobots">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="custom">
+          Custom Regex <span class="tab-count" id="countCustom">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="external">
+          External <span class="tab-count" id="countExternal">0</span>
+        </button>
+      </nav>
+
+      <!-- Active Tab Content Area -->
+      <div class="tab-content-area">
+        <div id="tabListContainer" class="items-list">
+          <div class="empty-state">
+            <p>No results yet. Run a crawl or select a previous target to view extracted data.</p>
+          </div>
+        </div>
+
+        <!-- DNS Map Image Modal / Viewer -->
+        <div id="dnsMapContainer" class="dns-map-container" style="display: none;">
+          <div class="dns-map-header">
+            <span>DNSDumpster Visual Infrastructure Map</span>
+            <a id="dnsMapDownloadLink" class="btn-sm" download target="_blank">Open Full Image</a>
+          </div>
+          <img id="dnsMapImage" src="" alt="DNS Map">
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -96,8 +96,19 @@ parser.add_argument('--only-urls', help='only extract URLs', dest='only_urls',
                     action='store_true')
 parser.add_argument('--wayback', help='fetch URLs from archive.org as seeds',
                     dest='archive', action='store_true')
+parser.add_argument('--ui', '--server', help='launch web UI dashboard',
+                    dest='ui', action='store_true')
+parser.add_argument('--port', help='port for web UI dashboard (default: 5000)',
+                    dest='port', type=int, default=5000)
 args = parser.parse_args()
 
+
+# If the user has supplied --ui argument
+if args.ui:
+    import web_server
+    sys.argv = ['web_server.py', '--port', str(args.port)]
+    web_server.main()
+    quit()
 
 # If the user has supplied --update argument
 if args.update:
