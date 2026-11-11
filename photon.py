@@ -415,19 +415,29 @@ datasets = {
 
 if args.dns:
     print('%s Enumerating subdomains' % run)
-    from plugins.find_subdomains import find_subdomains
-    subdomains = find_subdomains(domain)
-    print('%s %i subdomains found' % (info, len(subdomains)))
-    writer([subdomains], ['subdomains'], output_dir)
-    datasets['subdomains'] = subdomains
-    from plugins.dnsdumpster import dnsdumpster
-    print('%s Generating DNS map' % run)
-    dnsdumpster(domain, output_dir)
+    try:
+        from plugins.find_subdomains import find_subdomains
+        subdomains = find_subdomains(domain)
+        print('%s %i subdomains found' % (info, len(subdomains)))
+        writer([subdomains], ['subdomains'], output_dir)
+        datasets['subdomains'] = subdomains
+    except Exception as e:
+        print('%s Subdomain enumeration skipped: %s' % (bad, e))
+
+    try:
+        from plugins.dnsdumpster import dnsdumpster
+        print('%s Generating DNS map' % run)
+        dnsdumpster(domain, output_dir)
+    except Exception as e:
+        print('%s DNS mapping skipped: %s' % (bad, e))
 
 if args.export:
-    from plugins.exporter import exporter
-    # exporter(directory, format, datasets)
-    exporter(output_dir, args.export, datasets)
+    try:
+        from plugins.exporter import exporter
+        # exporter(directory, format, datasets)
+        exporter(output_dir, args.export, datasets)
+    except Exception as e:
+        print('%s Export error: %s' % (bad, e))
 
 print('%s Results saved in %s%s%s directory' % (good, green, output_dir, end))
 
